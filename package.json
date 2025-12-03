@@ -2,14 +2,17 @@
   "name": "school-management",
   "version": "0.1.0",
   "private": true,
+  
   "scripts": {
     "dev": "next dev",
+    "dev": "next dev & sleep 2 && start http://localhost:3000/addSchool && start http://localhost:3000/showSchools",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",
+    "cloudinary": "^2.8.0",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "next": "16.0.6",
@@ -24,6 +27,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
+    "open": "^11.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-import path from 'path';
-import { promises as fs } from 'fs';
+import { NextResponse } from "next/server";
+import mysql from "mysql2/promise";
+import path from "path";
+import { promises as fs } from "fs";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
@@ -15,35 +15,39 @@ export async function POST(req: NextRequest) {
     const email_id = formData.get("email_id") as string;
     const imageFile = formData.get("image") as File;
 
-    // ---------- SAVE IMAGE ----------
+    // ----- SAVE IMAGE -----
     const uploadDir = path.join(process.cwd(), "public/schoolImages");
     await fs.mkdir(uploadDir, { recursive: true });
 
-    const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+    const bytes = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
     const filename = `${Date.now()}-${imageFile.name}`;
     const filePath = path.join(uploadDir, filename);
-    await fs.writeFile(filePath, imageBuffer);
+    await fs.writeFile(filePath, buffer);
 
-    // ---------- INSERT INTO DATABASE ----------
-    const connection = await mysql.createConnection({
+    // ----- SAVE IN DATABASE -----
+    const db = await mysql.createConnection({
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT),
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
+      database: process.env.DB_NAME,
     });
 
-    const [result] = await connection.execute(
-      `INSERT INTO schools (name, address, city, state, contact, email_id, image) 
+    await db.execute(
+      `INSERT INTO schools (name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [name, address, city, state, contact, email_id, `/schoolImages/${filename}`]
     );
 
-    await connection.end();
+    await db.end();
 
     return NextResponse.json({ message: "School added successfully!" });
   } catch (error: any) {
     console.error("ADD SCHOOL ERROR:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message ?? "Something went wrong" },
+      { status: 500 }
+    );
   }
 }
